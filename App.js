@@ -17,6 +17,8 @@ import ListItem from './src/components/ListItem/ListItem';
 import PlaceInput from './src/components/PlaceInput/PlaceInput';
 import PlaceList from './src/components/PlaceList/PlaceList';
 import PlaceDetailsModal from './src/components/PlaceDetails/PlaceDetailModal';
+import {connect} from 'react-redux';
+import {addPlace, deletePlace, selectPlace, deselectPlace} from './src/store/actions/index';
 
 const instructions = Platform.select({
     ios: 'Press Cmd+R to reload,\n' +
@@ -26,55 +28,25 @@ const instructions = Platform.select({
 });
 
 type Props = {};
-export default class App extends Component<Props> {
-    state = {
-        places: [],
-        selectedPlace: null
-    };
+class App extends Component<Props> {
     onPlaceAddedHandler = (place) => {
-        this.setState(prevState => {
-            return {
-                places: prevState.places.concat({key: Math.random().toString(), name: place, image: {uri: 'https://i.ytimg.com/vi/U2OyyvVb9Dw/maxresdefault.jpg'}})
-            }
-        });
+        this.props.onAddPlace(place);
     };
     itemSelectHandler = key => {
-        this.setState(prevState => {
-            return {
-                selectedPlace: prevState.places.find(place => {
-                    return place.key === key;
-                })
-            }
-        });
-        // this.setState(prevState => {
-        //     return {
-        //         places: prevState.places.filter(place => {
-        //             return place.key !== key
-        //         })
-        //     }
-        // });
+        this.props.onSelectPlace(key);
     };
     itemDeleted = () => {
-        this.setState(prevState => {
-            return {
-                places: prevState.places.filter(place => {
-                    return place.key !== prevState.selectedPlace.key
-                }),
-                selectedPlace: null
-            }
-        });
+        this.props.onDeletePlace();
     };
     closeModal = () => {
-        this.setState({
-            selectedPlace: null
-        });
+        this.props.onDeselectPlace();
     };
     render() {
         return (
             <View style={styles.container}>
-                <PlaceDetailsModal selectedPlace={this.state.selectedPlace} onModalClose={this.closeModal} onItemDeleted={this.itemDeleted}/>
+                <PlaceDetailsModal selectedPlace={this.props.selectedPlace} onModalClose={this.closeModal} onItemDeleted={this.itemDeleted}/>
                 <PlaceInput onPlaceAdded={this.onPlaceAddedHandler}/>
-                <PlaceList places={this.state.places} itemSelected={this.itemSelectHandler}/>
+                <PlaceList places={this.props.places} itemSelected={this.itemSelectHandler}/>
             </View>
         );
     }
@@ -88,3 +60,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5FCFF',
     }
 });
+
+const stateProps = state => {
+    return {
+        places: state.places.places,
+        selectedPlace: state.places.selectedPlace
+    };
+};
+
+const dispatchProps = dispatch => {
+    return {
+        onAddPlace: (name) => dispatch(addPlace(name)),
+        onDeletePlace: () => dispatch(deletePlace()),
+        onSelectPlace: (key) => dispatch(selectPlace(key)),
+        onDeselectPlace: () => dispatch(deselectPlace())
+    };
+};
+
+export default connect(stateProps, dispatchProps)(App);
